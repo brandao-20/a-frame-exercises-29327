@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 3B — AR.js (image tracking / NFT)</title>
+
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar-nft.js"></script>
+
+  <style>
+    body { margin:0; overflow:hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
+    .arjs-loader {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.75);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; color: #fff; text-align:center; padding: 16px;
+    }
+    .arjs-loader .box { max-width: 520px; line-height: 1.35; }
+    .arjs-loader .small { opacity: .85; font-size: 14px; margin-top: 8px; }
+
+    .hud {
+      position: fixed; top: 12px; left: 12px;
+      z-index: 9998;
+      background: rgba(17,24,39,.72);
+      color: #fff;
+      padding: 12px 12px;
+      border-radius: 12px;
+      min-width: 320px;
+      backdrop-filter: blur(6px);
+    }
+    .hud h1 { font-size: 16px; margin: 0 0 6px; font-weight: 700; }
+    .hud p { margin: 0; font-size: 13px; opacity: .92; }
+    .hud .row { display:flex; gap:8px; margin-top:10px; flex-wrap: wrap; }
+    .hud a.btn {
+      appearance: none; border: 0; cursor: pointer;
+      background: #fff; color: #111827;
+      padding: 8px 10px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      text-decoration: none; display:inline-flex; align-items:center;
+    }
+    .hud a.btn.secondary { background: rgba(255,255,255,.18); color:#fff; }
+    .hud .status { margin-top: 8px; font-size: 13px; }
+    .status b { color: #A7F3D0; }
+    .status .warn { color: #FDE68A; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  </style>
+</head>
+
+<body>
+  <div class="arjs-loader" id="loader">
+    <div class="box">
+      <div style="font-size:18px;font-weight:800">A carregar descritores NFT…</div>
+      <div class="small">Isto pode demorar alguns segundos (depende do dispositivo).</div>
+      <div class="small">Quando terminar, aponta a câmara para a imagem alvo.</div>
+    </div>
+  </div>
+
+  <div class="hud">
+    <h1>Exercise 3B — AR.js (Image Tracking / NFT)</h1>
+    <p>Dica: abre <code>target.html</code> noutro ecrã ou imprime.</p>
+    <div class="row">
+      <a class="btn" href="./target.html" target="_blank" rel="noopener">Abrir target.html</a>
+      <a class="btn secondary" href="./target-image.png" target="_blank" rel="noopener">Abrir PNG</a>
+    </div>
+    <div class="status" id="status">Estado: <span class="warn">à espera do carregamento…</span></div>
+    <div class="status" id="debugPath" style="opacity:.85;"></div>
+  </div>
+
+  <a-scene
+    id="scene"
+    vr-mode-ui="enabled: false;"
+    renderer="logarithmicDepthBuffer: true;"
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+  >
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    const loader = document.getElementById("loader");
+    const statusEl = document.getElementById("status");
+    const debugPath = document.getElementById("debugPath");
+    const scene = document.getElementById("scene");
+
+    // Base da pasta atual (inclui /repo/ se estiver em GitHub Pages)
+    const baseDir = new URL(".", window.location.href).pathname;   // ex: /exercise3-arjs/image-tracking/
+    const nftUrl = baseDir + "targets/nft_target";                  // sem extensão
+
+    debugPath.innerHTML = `NFT url: <code>${nftUrl}</code>`;
+
+    // Criar o a-nft dinamicamente (evita o AR.js tentar /targets/... na raiz)
+    const nft = document.createElement("a-nft");
+    nft.setAttribute("type", "nft");
+    nft.setAttribute("url", nftUrl);
+    nft.setAttribute("emitevents", "true");
+    nft.setAttribute("smooth", "true");
+    nft.setAttribute("smoothCount", "10");
+    nft.setAttribute("smoothTolerance", "0.01");
+    nft.setAttribute("smoothThreshold", "5");
+
+    // Conteúdo AR
+    const box = document.createElement("a-box");
+    box.setAttribute("position", "50 150 0");
+    box.setAttribute("rotation", "0 45 0");
+    box.setAttribute("scale", "120 120 120");
+    box.setAttribute("color", "#4CC3D9");
+    nft.appendChild(box);
+
+    const label = document.createElement("a-entity");
+    label.setAttribute("position", "50 280 0");
+    label.setAttribute("text", "value: NFT OK!; align: center; width: 600; color: #111827;");
+    nft.appendChild(label);
+
+    // Inserir antes da câmara
+    const camera = scene.querySelector("[camera]");
+    scene.insertBefore(nft, camera);
+
+    // Eventos
+    window.addEventListener("arjs-nft-loaded", () => {
+      loader.style.display = "none";
+      statusEl.innerHTML = 'Estado: <b>descritores carregados</b> — aponta para a imagem alvo.';
+    });
+
+    nft.addEventListener("markerFound", () => {
+      statusEl.innerHTML = 'Estado: <b>target detetado ✅</b>';
+    });
+
+    nft.addEventListener("markerLost", () => {
+      statusEl.innerHTML = 'Estado: <span class="warn">à procura do target…</span>';
+    });
+  </script>
+</body>
+</html>

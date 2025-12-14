@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Target (Exercise 3B)</title>
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#f4f4f5; }
+    .wrap { min-height: 100vh; display:flex; align-items:center; justify-content:center; padding: 24px; }
+    .card { background:#fff; border-radius:16px; padding:16px; box-shadow: 0 10px 30px rgba(0,0,0,.10); max-width: 920px; width: 100%; }
+    h1 { margin: 0 0 8px; font-size: 18px; }
+    p { margin: 0 0 12px; color:#374151; }
+    img { width: 100%; height: auto; border-radius: 12px; border: 2px solid #111827; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px; }
+    a, button {
+      background:#111827; color:#fff; text-decoration:none;
+      padding:10px 12px; border-radius: 10px; font-weight: 700; border:0; cursor:pointer;
+    }
+    a.secondary { background:#6B7280; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Image Target — Exercise 3B (NFT)</h1>
+      <p>Mostra este ecrã noutro dispositivo/monitor (ou imprime) e aponta a câmara do <code>index.html</code>.</p>
+
+      <img src="./target-image.png" alt="NFT Target" />
+
+      <div class="row">
+        <a href="./target-image.png" target="_blank" rel="noopener">Abrir imagem (tab)</a>
+        <a class="secondary" href="javascript:window.print()">Imprimir</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
