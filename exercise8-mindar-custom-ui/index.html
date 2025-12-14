@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 8 — MindAR custom UI</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body { margin:0; font-family:system-ui; background:#000; }
+
+    /* overlays */
+    .overlay{
+      position:fixed; inset:0; z-index:9999;
+      display:none; place-items:center;
+      background:rgba(0,0,0,.72); color:#fff; padding:18px;
+    }
+    .overlay.show{ display:grid; }
+
+    .card{
+      max-width:560px; width:100%;
+      background:rgba(20,20,20,.78);
+      border-radius:18px; padding:16px;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .row{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+
+    .ghost{
+      width:170px; aspect-ratio:1/1; border-radius:14px;
+      background:rgba(255,255,255,.06);
+      display:grid; place-items:center; overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .ghost img{ width:100%; height:100%; object-fit:cover; opacity:.70; }
+
+    a.btn{
+      display:inline-block; margin-top:10px;
+      background:rgba(255,255,255,.12);
+      color:#fff; padding:10px 12px; border-radius:12px;
+      text-decoration:none; font-weight:700;
+    }
+    .small{ opacity:.88; font-size:14px; line-height:1.35; }
+
+    .mini{
+      position:fixed; z-index:9998; left:12px; top:12px;
+      background:rgba(10,10,10,.55); color:#fff;
+      padding:10px 12px; border-radius:14px;
+      backdrop-filter: blur(8px);
+      font-size:13px;
+    }
+    code{ opacity:.9; }
+  </style>
+
+  <script>
+    function hasWebGL() {
+      try {
+        const c = document.createElement("canvas");
+        return !!(c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl"));
+      } catch (e) {
+        return false;
+      }
+    }
+    window.__HAS_WEBGL__ = hasWebGL();
+  </script>
+</head>
+
+<body>
+  <div class="mini"><b>Exercise 8</b> — Custom UI (MindAR)</div>
+
+  <!-- Loading -->
+  <div id="loadOverlay" class="overlay show">
+    <div class="card">
+      <div style="font-size:18px;font-weight:800">A carregar…</div>
+      <div class="small">A iniciar a câmara e o modelo de tracking.</div>
+    </div>
+  </div>
+
+  <!-- Scanning -->
+  <div id="scanOverlay" class="overlay">
+    <div class="card">
+      <div class="row">
+        <div class="ghost">
+          <img src="./mindar_target1.png" alt="Target ghost">
+        </div>
+        <div>
+          <div style="font-size:18px;font-weight:800">A procurar o target…</div>
+          <div class="small">Alinha a imagem real com a imagem “fantasma”.</div>
+          <a class="btn" href="./target.html" target="_blank" rel="noopener">Abrir target.html</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div id="errorOverlay" class="overlay">
+    <div class="card">
+      <div style="font-size:18px;font-weight:800">Erro a iniciar</div>
+      <div class="small" id="errorText" style="margin-top:6px">
+        Confirma permissões da câmara.<br>
+        No iPhone tem de ser em <b>HTTPS</b> (GitHub Pages).
+      </div>
+    </div>
+  </div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: ./targets/mindar_target1.mind;"
+    color-space="sRGB"
+    renderer="colorManagement: true; physicallyCorrectLights: true;"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+
+    <a-entity id="t0" mindar-image-target="targetIndex: 0">
+      <a-box color="#22C55E" depth="0.25" height="0.25" width="0.25"></a-box>
+      <a-entity
+        text="value: Custom UI ✅; color:#111; align:center; width:2.2;"
+        position="0 0.45 0"></a-entity>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    const loadEl = document.getElementById("loadOverlay");
+    const scanEl = document.getElementById("scanOverlay");
+    const errEl  = document.getElementById("errorOverlay");
+    const errTxt = document.getElementById("errorText");
+
+    function show(el){ el.classList.add("show"); }
+    function hide(el){ el.classList.remove("show"); }
+
+    // Se não houver WebGL, não vale a pena esperar.
+    if (!window.__HAS_WEBGL__) {
+      hide(loadEl); hide(scanEl);
+      errTxt.innerHTML =
+        "O teu browser não está a conseguir usar <b>WebGL</b>.<br>" +
+        "O MindAR precisa de WebGL para funcionar.<br><br>" +
+        "No PC: ativa <b>Hardware Acceleration</b> (Chrome/Edge → Settings → System) e reinicia.<br>" +
+        "Ou testa no iPhone via <b>HTTPS</b> (GitHub Pages).";
+      show(errEl);
+    } else {
+      const sceneEl = document.querySelector("a-scene");
+      const targetEl = document.getElementById("t0");
+
+      // MindAR events
+      sceneEl.addEventListener("arReady", () => {
+        hide(loadEl);
+        show(scanEl);
+      });
+
+      sceneEl.addEventListener("arError", (e) => {
+        hide(loadEl); hide(scanEl);
+        errTxt.innerHTML =
+          "Falha ao iniciar a AR.<br>" +
+          "Confirma permissões da câmara e abre em HTTPS no iPhone.<br><br>" +
+          "<code>" + (e?.detail?.message || "arError") + "</code>";
+        show(errEl);
+      });
+
+      targetEl.addEventListener("targetFound", () => {
+        hide(scanEl);
+      });
+
+      targetEl.addEventListener("targetLost", () => {
+        show(scanEl);
+      });
+    }
+  </script>
+</body>
+</html>
