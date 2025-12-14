@@ -34,7 +34,7 @@ Este repositório é baseado no material fornecido pelo professor no PDF `IEU_25
 
 ---
 
-## ▶️ Como executar localmente (PC)
+## Como executar localmente (PC)
 
 Na raiz do repositório, abre uma terminal/prompt e executa (segundo o teu sistema operativo):
 
