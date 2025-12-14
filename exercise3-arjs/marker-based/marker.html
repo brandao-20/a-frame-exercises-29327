@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hiro Marker</title>
+  <style>
+    body{margin:0; font-family:system-ui,Segoe UI,Roboto,Arial; background:#f4f4f4;}
+    .wrap{min-height:100vh; display:grid; place-items:center; padding:24px;}
+    .card{background:#fff; padding:18px; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.10); text-align:center; width:min(860px, 92vw);}
+    img{width:min(70vw,520px); height:auto; display:block; margin:12px auto; border:12px solid #fff; box-shadow:0 8px 24px rgba(0,0,0,.12)}
+    p{margin:10px 0 0; color:#333}
+    small{color:#666}
+    .row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px;}
+    a.btn, button.btn{
+      cursor:pointer;
+      border:0;
+      border-radius:10px;
+      padding:10px 14px;
+      font-weight:700;
+      text-decoration:none;
+      display:inline-block;
+    }
+    a.primary{background:#111827; color:#fff;}
+    button.secondary{background:#e5e7eb; color:#111;}
+    .warn{margin-top:10px; color:#b45309; display:none;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2 style="margin:0 0 8px;">Hiro Marker</h2>
+
+      <!-- ✅ Link fiável para o hiro.png do AR.js -->
+      <img id="hiroImg"
+           alt="Hiro marker"
+           src="https://raw.githack.com/AR-js-org/AR.js/master/data/images/hiro.png" />
+
+      <div class="row">
+        <a class="btn primary" href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank" rel="noopener">
+          Abrir imagem (novo separador)
+        </a>
+        <button class="btn secondary" id="btnPrint" type="button">Imprimir</button>
+      </div>
+
+      <p><small>
+        Para testar: mostra este marcador noutro ecrã (telemóvel/monitor) ou imprime e aponta a câmara da página AR.
+      </small></p>
+
+      <div class="warn" id="warn">
+        A imagem não carregou. Usa “Abrir imagem” e tenta novamente (ou imprime).
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const img = document.getElementById("hiroImg");
+    const warn = document.getElementById("warn");
+    img.addEventListener("error", () => { warn.style.display = "block"; });
+
+    document.getElementById("btnPrint").addEventListener("click", () => window.print());
+  </script>
+</body>
+</html>

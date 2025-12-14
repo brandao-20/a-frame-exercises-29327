@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 3A — AR.js (Marker-based)</title>
+
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    .hud{
+      position:fixed; left:12px; right:12px; top:12px;
+      padding:10px 12px; border-radius:10px;
+      background:rgba(0,0,0,.55); color:#fff;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      z-index:9999; line-height:1.25;
+    }
+    .hud small{opacity:.85}
+    .hud .ok{color:#7CFC9A}
+    .hud .warn{color:#FFD37C}
+    .hud .actions{margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;}
+    .hud button{
+      cursor:pointer; border:0; border-radius:10px;
+      padding:10px 12px; font-weight:600;
+      background:#ffffff; color:#111;
+    }
+    .hud button.secondary{background:rgba(255,255,255,.2); color:#fff; border:1px solid rgba(255,255,255,.25);}
+  </style>
+</head>
+
+<body style="margin:0; overflow:hidden;">
+  <div class="hud" id="hud">
+    <div><b>Exercise 3A — AR.js (marker-based)</b></div>
+    <div id="status"><span class="warn">Estado:</span> à procura do marcador “Hiro”…</div>
+    <small>Dica: abre o marcador num 2.º ecrã (ou imprime) e aponta a câmara.</small>
+
+    <!-- ✅ Botão pedido -->
+    <div class="actions">
+      <button id="btnOpenMarker" type="button">Abrir marker.html</button>
+      <button id="btnOpenHiro" class="secondary" type="button">Abrir imagem Hiro</button>
+    </div>
+  </div>
+
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="colorManagement: true"
+    arjs="sourceType: webcam; debugUIEnabled: false;"
+  >
+    <a-marker id="hiroMarker" preset="hiro" emitevents="true">
+      <a-entity position="0 0.5 0">
+        <a-box
+          id="box"
+          depth="0.6" height="0.6" width="0.6"
+          color="#4CC3D9"
+          animation="property: rotation; to: 0 360 0; loop: true; dur: 1800; easing: linear"
+        ></a-box>
+
+        <a-text
+          value="Hiro detetado!"
+          position="0 0.6 0"
+          align="center"
+          width="2.5"
+          color="#111"
+        ></a-text>
+      </a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    const statusEl = document.getElementById("status");
+    const marker = document.getElementById("hiroMarker");
+
+    function setStatus(found) {
+      statusEl.innerHTML = found
+        ? '<span class="ok">Estado:</span> marcador detetado ✅'
+        : '<span class="warn">Estado:</span> à procura do marcador “Hiro”…';
+    }
+
+    marker.addEventListener("markerFound", () => setStatus(true));
+    marker.addEventListener("markerLost",  () => setStatus(false));
+    setStatus(false);
+
+    // Botões
+    document.getElementById("btnOpenMarker").addEventListener("click", () => {
+      window.open("./marker.html", "_blank", "noopener");
+    });
+
+    document.getElementById("btnOpenHiro").addEventListener("click", () => {
+      window.open("https://raw.githack.com/AR-js-org/AR.js/master/data/images/hiro.png", "_blank", "noopener");
+    });
+  </script>
+</body>
+</html>
