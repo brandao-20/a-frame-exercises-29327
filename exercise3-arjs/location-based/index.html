@@ -5,32 +5,86 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Exercise 3C — AR.js (location-based)</title>
 
-  <!-- A-Frame + AR.js -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar.js"></script>
 
   <style>
     body { margin:0; overflow:hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
     .hud {
       position: fixed; top: 12px; left: 12px; z-index: 9999;
       background: rgba(17,24,39,.72); color:#fff;
-      padding: 12px; border-radius: 12px; min-width: 340px;
+      padding: 12px; border-radius: 12px; min-width: 380px;
       backdrop-filter: blur(6px);
     }
     .hud h1 { margin:0 0 6px; font-size:16px; font-weight: 800; }
-    .hud p { margin:0; font-size: 13px; opacity:.92; }
+    .hud p { margin:0; font-size: 13px; opacity:.92; line-height: 1.25; }
+
     .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-    button, a.btn {
+    button {
       appearance:none; border:0; cursor:pointer;
       padding: 8px 10px; border-radius: 10px;
       font-size: 13px; font-weight: 700;
-      background:#fff; color:#111827; text-decoration:none;
+      background:#fff; color:#111827;
     }
-    button.secondary, a.btn.secondary { background: rgba(255,255,255,.18); color:#fff; }
+    button.secondary { background: rgba(255,255,255,.18); color:#fff; }
+
     .status { margin-top: 10px; font-size: 13px; }
     .status b { color: #A7F3D0; }
     .warn { color: #FDE68A; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+
+    /* --- Compass HUD --- */
+    .compassWrap {
+      display:flex; gap:12px; align-items:center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.15);
+    }
+
+    .compass {
+      width: 120px; height: 120px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.35);
+      position: relative;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.08), rgba(0,0,0,.15));
+    }
+
+    .label {
+      position:absolute; font-weight:800; font-size:12px; opacity:.95;
+      transform: translate(-50%, -50%);
+      color: rgba(255,255,255,.92);
+      user-select:none;
+    }
+    .label.n { left: 50%; top: 10%; }
+    .label.e { left: 90%; top: 50%; }
+    .label.s { left: 50%; top: 90%; }
+    .label.w { left: 10%; top: 50%; }
+
+    .needle {
+      position:absolute;
+      left: 50%; top: 50%;
+      width: 4px;
+      height: 46px;
+      transform-origin: 50% 100%;
+      transform: translate(-50%, -100%) rotate(0deg);
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,.35);
+    }
+    .needle.target { background: #ff4d4d; }   /* vermelho: alvo */
+    .needle.heading { background: #60a5fa; opacity: .95; } /* azul: heading */
+
+    .centerDot {
+      position:absolute; left: 50%; top: 50%;
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,.9);
+      box-shadow: 0 0 10px rgba(0,0,0,.35);
+    }
+
+    .compassInfo { font-size: 13px; opacity: .92; line-height: 1.3; }
+    .compassInfo .small { font-size: 12px; opacity: .85; }
   </style>
 </head>
 
@@ -38,22 +92,40 @@
   <div class="hud">
     <h1>Exercise 3C — AR.js (Location-based)</h1>
     <p>
-      iPhone: abre em HTTPS (GitHub Pages) + permite <b>câmara</b> e <b>localização</b>.
-      <br/>Portátil: usa simulação com <code>?sim=1</code>.
+      iPhone: abre em <b>HTTPS</b> (GitHub Pages) + permite <b>câmara</b>, <b>localização</b> e <b>orientação</b> (se pedir).<br>
+      Nota: se o GPS estiver com <code>accuracy</code> alto (30–50 m), usa alvo 60–100 m.
     </p>
 
     <div class="row">
-      <button id="btnStart">Start (pedir permissões)</button>
-      <button id="btnNear" class="secondary">Colocar alvo a ~3 m</button>
-      <button id="btnFar" class="secondary">Colocar alvo a ~10 m</button>
+      <button id="btnStart">Start (permissões)</button>
+      <button id="btn30" class="secondary">Alvo 30 m</button>
+      <button id="btn60" class="secondary">Alvo 60 m</button>
+      <button id="btn100" class="secondary">Alvo 100 m</button>
     </div>
 
-    <div class="status" id="status">
-      Estado: <span class="warn">à espera…</span>
-    </div>
+    <div class="status" id="status">Estado: <span class="warn">à espera…</span></div>
+    <div class="status" id="coords" style="opacity:.92"></div>
+    <div class="status" id="target" style="opacity:.85"></div>
 
-    <div class="status" id="coords" style="opacity:.9"></div>
-    <div class="status" id="debug" style="opacity:.8"></div>
+    <div class="compassWrap">
+      <div class="compass" aria-label="Compass">
+        <div class="label n">N</div>
+        <div class="label e">E</div>
+        <div class="label s">S</div>
+        <div class="label w">W</div>
+
+        <div class="needle target" id="needleTarget" title="Target bearing"></div>
+        <div class="needle heading" id="needleHeading" title="Phone heading"></div>
+
+        <div class="centerDot"></div>
+      </div>
+
+      <div class="compassInfo">
+        <div id="headingText">Heading (azul): <span class="warn">—</span></div>
+        <div id="bearingText">Bearing (vermelho): <span class="warn">—</span></div>
+        <div id="turnText" class="small">Instrução: <span class="warn">—</span></div>
+      </div>
+    </div>
   </div>
 
   <a-scene
@@ -65,21 +137,24 @@
     <!-- Câmara GPS -->
     <a-entity id="cam" gps-camera rotation-reader></a-entity>
 
-    <!-- Objeto geolocalizado (as coords são definidas em JS) -->
+    <!-- POI geolocalizado -->
     <a-entity id="poi" visible="false">
-      <a-box color="#4CC3D9" depth="2" height="2" width="2"></a-box>
+      <a-cylinder position="0 8 0" radius="0.6" height="16" color="#FF4D4D"></a-cylinder>
+      <a-box position="0 16 0" depth="6" height="6" width="6" color="#4CC3D9"></a-box>
       <a-entity
-        position="0 2.6 0"
-        text="value: POI; align: center; width: 12; color: #111827;"
+        position="0 20 0"
+        text="value: TARGET (Location-based); align: center; width: 18; color: #111827;"
       ></a-entity>
     </a-entity>
   </a-scene>
 
   <script>
     // --- Helpers ---
+    function toRad(d){ return d * Math.PI / 180; }
+    function toDeg(r){ return r * 180 / Math.PI; }
+
     function haversineMeters(lat1, lon1, lat2, lon2) {
       const R = 6371000;
-      const toRad = (d) => d * Math.PI / 180;
       const dLat = toRad(lat2 - lat1);
       const dLon = toRad(lon2 - lon1);
       const a = Math.sin(dLat/2)**2 +
@@ -87,100 +162,159 @@
       return 2 * R * Math.asin(Math.sqrt(a));
     }
 
-    // Aproximação simples: mover para norte "meters" (bom o suficiente para demo)
-    function offsetNorth(lat, meters) {
-      return lat + (meters / 111320); // ~ metros por grau de latitude
+    // Bearing (0°=N, 90°=E)
+    function bearingDeg(lat1, lon1, lat2, lon2){
+      const y = Math.sin(toRad(lon2-lon1)) * Math.cos(toRad(lat2));
+      const x = Math.cos(toRad(lat1))*Math.sin(toRad(lat2)) -
+                Math.sin(toRad(lat1))*Math.cos(toRad(lat2))*Math.cos(toRad(lon2-lon1));
+      return (toDeg(Math.atan2(y, x)) + 360) % 360;
     }
 
-    const statusEl = document.getElementById("status");
-    const coordsEl = document.getElementById("coords");
-    const debugEl  = document.getElementById("debug");
+    function offsetNorth(lat, meters){ return lat + (meters / 111320); }
 
-    const cam = document.getElementById("cam");
-    const poi = document.getElementById("poi");
-
-    const url = new URL(window.location.href);
-    const sim = url.searchParams.get("sim") === "1";
-
-    let last = { lat: null, lon: null, acc: null };
-    let target = { lat: null, lon: null };
-
-    function setStatus(html) { statusEl.innerHTML = "Estado: " + html; }
-
-    function setTargetAtDistance(meters) {
-      if (last.lat == null || last.lon == null) {
-        setStatus('<span class="warn">sem localização ainda… clica Start e aceita permissões</span>');
-        return;
-      }
-      target.lat = offsetNorth(last.lat, meters);
-      target.lon = last.lon;
-
-      // IMPORTANT: o gps-entity-place tem de estar no elemento que queremos posicionar
-      poi.setAttribute("gps-entity-place", `latitude: ${target.lat}; longitude: ${target.lon};`);
-      poi.setAttribute("visible", "true");
-
-      setStatus(`<b>alvo colocado</b> a ~${meters} m a norte (aprox.)`);
+    function normalizeSigned(deg){
+      // para [-180, 180]
+      let d = ((deg % 360) + 360) % 360;
+      if (d > 180) d -= 360;
+      return d;
     }
 
-    function refreshOverlay() {
-      if (last.lat == null) {
-        coordsEl.innerHTML = "";
-        return;
-      }
-      let html = `GPS: <code>${last.lat.toFixed(6)}, ${last.lon.toFixed(6)}</code>`;
-      if (last.acc != null) html += ` • accuracy: <code>${Math.round(last.acc)} m</code>`;
-      coordsEl.innerHTML = html;
-
-      if (target.lat != null) {
-        const d = haversineMeters(last.lat, last.lon, target.lat, target.lon);
-        debugEl.innerHTML = `Target: <code>${target.lat.toFixed(6)}, ${target.lon.toFixed(6)}</code> • dist: <code>${Math.round(d)} m</code>`;
-      } else {
-        debugEl.innerHTML = sim
-          ? `Modo simulação ativo: <code>?sim=1</code>`
-          : `Sugestão: usa iPhone e testa ao ar livre (GPS/compasso mais estável).`;
-      }
-    }
-
-    // --- Permissões (iOS precisa de gesto do utilizador) ---
     async function requestOrientationIfNeeded() {
       try {
         if (typeof DeviceOrientationEvent !== "undefined" &&
             typeof DeviceOrientationEvent.requestPermission === "function") {
           await DeviceOrientationEvent.requestPermission();
         }
-      } catch (e) { /* ok */ }
+      } catch(e) {}
+    }
+
+    // --- DOM refs ---
+    const statusEl = document.getElementById("status");
+    const coordsEl = document.getElementById("coords");
+    const targetEl = document.getElementById("target");
+
+    const needleTarget = document.getElementById("needleTarget");
+    const needleHeading = document.getElementById("needleHeading");
+    const headingText = document.getElementById("headingText");
+    const bearingText = document.getElementById("bearingText");
+    const turnText = document.getElementById("turnText");
+
+    const cam = document.getElementById("cam");
+    const poi = document.getElementById("poi");
+
+    // --- State ---
+    let last = { lat: null, lon: null, acc: null };
+    let target = { lat: null, lon: null, meters: null };
+    let heading = null;       // graus 0..360 (para onde o telemóvel aponta)
+    let bearing = null;       // graus 0..360 (para onde está o alvo)
+
+    function setStatus(html){ statusEl.innerHTML = "Estado: " + html; }
+
+    function updateCompassUI(){
+      // Heading (azul)
+      if (heading == null) {
+        headingText.innerHTML = `Heading (azul): <span class="warn">— (permite orientação)</span>`;
+        needleHeading.style.display = "none";
+      } else {
+        headingText.innerHTML = `Heading (azul): <b>${Math.round(heading)}°</b>`;
+        needleHeading.style.display = "block";
+        needleHeading.style.transform = `translate(-50%, -100%) rotate(${heading}deg)`;
+      }
+
+      // Bearing (vermelho)
+      if (bearing == null) {
+        bearingText.innerHTML = `Bearing (vermelho): <span class="warn">—</span>`;
+        needleTarget.style.display = "none";
+        turnText.innerHTML = `Instrução: <span class="warn">—</span>`;
+      } else {
+        bearingText.innerHTML = `Bearing (vermelho): <b>${Math.round(bearing)}°</b>`;
+        needleTarget.style.display = "block";
+        needleTarget.style.transform = `translate(-50%, -100%) rotate(${bearing}deg)`;
+
+        if (heading == null) {
+          turnText.innerHTML = `Instrução: <span class="warn">ativa a orientação para saberes para onde virar</span>`;
+        } else {
+          const diff = normalizeSigned(bearing - heading); // + = vira à direita; - = à esquerda
+          const abs = Math.round(Math.abs(diff));
+          if (abs <= 10) {
+            turnText.innerHTML = `Instrução: <b>estás alinhado ✅</b>`;
+          } else if (diff > 0) {
+            turnText.innerHTML = `Instrução: vira <b>${abs}° à direita</b>`;
+          } else {
+            turnText.innerHTML = `Instrução: vira <b>${abs}° à esquerda</b>`;
+          }
+        }
+      }
+    }
+
+    function refreshOverlay() {
+      if (last.lat == null) {
+        coordsEl.textContent = "";
+        targetEl.textContent = "";
+        bearing = null;
+        updateCompassUI();
+        return;
+      }
+
+      coordsEl.innerHTML =
+        `GPS: <code>${last.lat.toFixed(6)}, ${last.lon.toFixed(6)}</code>` +
+        (last.acc != null ? ` • accuracy: <code>${Math.round(last.acc)} m</code>` : "");
+
+      if (target.lat != null) {
+        const d = haversineMeters(last.lat, last.lon, target.lat, target.lon);
+        bearing = bearingDeg(last.lat, last.lon, target.lat, target.lon);
+
+        targetEl.innerHTML =
+          `Target: <code>${target.lat.toFixed(6)}, ${target.lon.toFixed(6)}</code>` +
+          ` • dist: <code>${Math.round(d)} m</code>`;
+
+      } else {
+        targetEl.textContent = "";
+        bearing = null;
+      }
+
+      updateCompassUI();
+    }
+
+    function placeTarget(meters) {
+      if (last.lat == null || last.lon == null) {
+        setStatus('<span class="warn">sem localização ainda — clica Start e aceita permissões</span>');
+        return;
+      }
+
+      target.meters = meters;
+      target.lat = offsetNorth(last.lat, meters);
+      target.lon = last.lon;
+
+      poi.setAttribute("gps-entity-place", `latitude: ${target.lat}; longitude: ${target.lon};`);
+      poi.setAttribute("visible", "true");
+
+      setStatus(`<b>alvo colocado</b> a ~${meters} m a norte (aprox.)`);
+      refreshOverlay();
     }
 
     async function start() {
       await requestOrientationIfNeeded();
 
-      if (sim) {
-        // Simulação para PC: escolhe uma coordenada qualquer (ex.: Lisboa)
-        const simLat = 38.736946;
-        const simLon = -9.142685;
-        cam.setAttribute("gps-camera", `simulateLatitude: ${simLat}; simulateLongitude: ${simLon};`);
-        last.lat = simLat; last.lon = simLon; last.acc = 5;
-        setStatus("<b>simulação ativa</b> (Lisboa)");
-        refreshOverlay();
-        setTargetAtDistance(10);
-        return;
-      }
-
-      // Forçar prompt de localização + guardar valores para overlay/target
       if (!navigator.geolocation) {
-        setStatus('<span class="warn">geolocation não suportada neste browser</span>');
+        setStatus('<span class="warn">geolocation não suportada</span>');
         return;
       }
 
       setStatus('<span class="warn">a pedir permissões de localização…</span>');
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           last.lat = pos.coords.latitude;
           last.lon = pos.coords.longitude;
           last.acc = pos.coords.accuracy;
-          setStatus("<b>permissões OK</b> — agora aponta e roda o telemóvel");
+
+          setStatus("<b>permissões OK</b> — roda o telemóvel até as agulhas alinharem");
           refreshOverlay();
-          setTargetAtDistance(10);
+
+          // distância “segura”: pelo menos 30m e idealmente 2x accuracy
+          const safe = Math.max(30, Math.round((last.acc || 30) * 2));
+          placeTarget(safe);
         },
         (err) => {
           setStatus(`<span class="warn">erro de localização: ${err.message}</span>`);
@@ -189,21 +323,47 @@
       );
     }
 
-    // Atualizações do gps-camera (quando o AR.js vai recebendo posição)
+    // GPS updates do AR.js
     cam.addEventListener("gps-camera-update-position", (e) => {
       last.lat = e.detail.position.latitude;
       last.lon = e.detail.position.longitude;
       refreshOverlay();
     });
 
+    // Heading (bússola) via DeviceOrientation
+    // iOS Safari costuma fornecer e.webkitCompassHeading (0=N)
+    let headingSmooth = null;
+    function onOrientation(e){
+      let h = null;
+
+      if (typeof e.webkitCompassHeading === "number") {
+        h = e.webkitCompassHeading; // 0..360, já em relação ao Norte
+      } else if (typeof e.alpha === "number") {
+        // fallback (nem sempre é perfeito): converter alpha para "heading" aproximado
+        h = (360 - e.alpha) % 360;
+      }
+
+      if (h == null) return;
+
+      if (headingSmooth == null) headingSmooth = h;
+      // suavizar para não tremer
+      headingSmooth = (headingSmooth * 0.85) + (h * 0.15);
+
+      heading = (headingSmooth + 360) % 360;
+      updateCompassUI();
+    }
+
+    window.addEventListener("deviceorientation", onOrientation, true);
+    window.addEventListener("deviceorientationabsolute", onOrientation, true);
+
     // UI
     document.getElementById("btnStart").addEventListener("click", start);
-    document.getElementById("btnNear").addEventListener("click", () => setTargetAtDistance(3));
-    document.getElementById("btnFar").addEventListener("click", () => setTargetAtDistance(10));
+    document.getElementById("btn30").addEventListener("click", () => placeTarget(30));
+    document.getElementById("btn60").addEventListener("click", () => placeTarget(60));
+    document.getElementById("btn100").addEventListener("click", () => placeTarget(100));
 
-    // Estado inicial
-    setStatus(sim ? '<span class="warn">modo simulação — clica Start</span>'
-                  : '<span class="warn">clica Start e aceita permissões</span>');
+    setStatus('<span class="warn">clica Start e aceita permissões</span>');
+    updateCompassUI();
   </script>
 </body>
 </html>
