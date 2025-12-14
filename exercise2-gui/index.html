@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 2 — A-Frame GUI (aframe-gui)</title>
+
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+  <!-- Compat patch: aframe-gui usa *BufferGeometry (three antigo) -->
+  <script>
+    (function () {
+      function alias(oldName, newName) {
+        if (window.THREE && !THREE[oldName] && THREE[newName]) {
+          THREE[oldName] = THREE[newName];
+        }
+      }
+      alias("PlaneBufferGeometry", "PlaneGeometry");
+      alias("BoxBufferGeometry", "BoxGeometry");
+      alias("SphereBufferGeometry", "SphereGeometry");
+      alias("CylinderBufferGeometry", "CylinderGeometry");
+      alias("CircleBufferGeometry", "CircleGeometry");
+      alias("RingBufferGeometry", "RingGeometry");
+      alias("TorusBufferGeometry", "TorusGeometry");
+      alias("TorusKnotBufferGeometry", "TorusKnotGeometry");
+      alias("ConeBufferGeometry", "ConeGeometry");
+      alias("DodecahedronBufferGeometry", "DodecahedronGeometry");
+      alias("IcosahedronBufferGeometry", "IcosahedronGeometry");
+      alias("OctahedronBufferGeometry", "OctahedronGeometry");
+      alias("TetrahedronBufferGeometry", "TetrahedronGeometry");
+    })();
+  </script>
+
+  <!-- “look at camera” simples -->
+  <script>
+    AFRAME.registerComponent("look-at-camera", {
+      tick: function () {
+        const cam = this.el.sceneEl.camera;
+        if (!cam) return;
+        this.el.object3D.lookAt(cam.position);
+      }
+    });
+  </script>
+
+  <!-- aframe-gui -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe-gui@0.5.1/dist/aframe-gui.min.js"></script>
+</head>
+
+<body style="margin:0">
+  <a-scene>
+    <!-- Câmara + cursor NORMAL do A-Frame -->
+    <a-entity position="0 1.6 0">
+      <a-camera look-controls wasd-controls position="0 0 0">
+        <a-cursor fuse="false" raycaster="objects: .gui-interactable"></a-cursor>
+      </a-camera>
+    </a-entity>
+
+    <!-- Cena base -->
+    <a-plane position="0 0 -4" rotation="-90 0 0" width="10" height="10" color="#7BC8A4"></a-plane>
+    <a-sky color="#ECECEC"></a-sky>
+
+    <a-box id="targetBox" position="0 1 -3" rotation="0 30 0" color="#4CC3D9"></a-box>
+
+    <!-- Painel UI -->
+    <a-entity id="uiRoot" position="0 2.35 -3.2" look-at-camera>
+      <!-- Fundo -->
+      <a-plane width="2.9" height="2.15" color="#111827" opacity="0.92"></a-plane>
+
+      <!-- Título -->
+      <a-text value="Exercise 2 (GUI)"
+              position="0 0.92 0.01"
+              align="center"
+              width="3.6"
+              color="#FFFFFF"></a-text>
+
+      <!-- BOTÃO 1: Mudar cor -->
+      <a-gui-button
+        id="btnColor"
+        class="gui-interactable"
+        width="2.5" height="0.45"
+        value=""
+        position="0 0.36 0.03"
+        font-size="0.18"
+        font-color="#111827"
+        background-color="#F9FAFB"
+        hover-color="#E5E7EB"
+        active-color="#D1D5DB"
+        border-color="#E5E7EB">
+      </a-gui-button>
+
+      <!-- Texto por cima do botão (sempre visível) -->
+      <a-text value="Mudar cor"
+              position="0 0.36 0.06"
+              align="center"
+              width="3.2"
+              color="#111"
+              shader="msdf"></a-text>
+
+      <!-- BOTÃO 2: Rodar 360º -->
+      <a-gui-button
+        id="btnRotate"
+        class="gui-interactable"
+        width="2.5" height="0.45"
+        value=""
+        position="0 -0.16 0.03"
+        font-size="0.18"
+        font-color="#111827"
+        background-color="#F9FAFB"
+        hover-color="#E5E7EB"
+        active-color="#D1D5DB"
+        border-color="#E5E7EB">
+      </a-gui-button>
+
+      <a-text value="Rodar 360º"
+              position="0 -0.16 0.06"
+              align="center"
+              width="3.2"
+              color="#111"
+              shader="msdf"></a-text>
+
+      <!-- BOTÃO 3: Reset -->
+      <a-gui-button
+        id="btnReset"
+        class="gui-interactable"
+        width="2.5" height="0.45"
+        value=""
+        position="0 -0.68 0.03"
+        font-size="0.18"
+        font-color="#FFFFFF"
+        background-color="#EF4444"
+        hover-color="#DC2626"
+        active-color="#B91C1C"
+        border-color="#DC2626">
+      </a-gui-button>
+
+      <a-text value="Reset"
+              position="0 -0.68 0.06"
+              align="center"
+              width="3.2"
+              color="#FFFFFF"
+              shader="msdf"></a-text>
+
+      <!-- Instrução + estado -->
+      <a-text id="hintText"
+              value="Aponta e clica nos botões."
+              position="0 -1.10 0.01"
+              align="center"
+              width="3.6"
+              color="#D1D5DB"></a-text>
+
+      <a-text id="stateText"
+              value="Cor: 1/5"
+              position="0 -1.28 0.01"
+              align="center"
+              width="3.6"
+              color="#9CA3AF"></a-text>
+    </a-entity>
+
+    <script>
+      const box = document.querySelector("#targetBox");
+      const btnColor = document.querySelector("#btnColor");
+      const btnRotate = document.querySelector("#btnRotate");
+      const btnReset = document.querySelector("#btnReset");
+      const stateText = document.querySelector("#stateText");
+
+      const colors = ["#4CC3D9", "#EF2D5E", "#FFC65D", "#27AE60", "#9B51E0"];
+      let idx = 0;
+
+      function applyColor() {
+        box.setAttribute("color", colors[idx]);
+        stateText.setAttribute("value", `Cor: ${idx + 1}/${colors.length}`);
+        box.setAttribute("animation__pulse", "property: scale; to: 1.06 1.06 1.06; dur: 120; dir: alternate; loop: 2");
+      }
+
+      function rotateBox() {
+        box.setAttribute("animation__spin", "property: rotation; to: 0 390 0; dur: 900; easing: easeInOutQuad");
+      }
+
+      function resetBox() {
+        idx = 0;
+        box.setAttribute("rotation", "0 30 0");
+        box.removeAttribute("animation__spin");
+        box.removeAttribute("animation__pulse");
+        applyColor();
+      }
+
+      btnColor.addEventListener("click", () => {
+        idx = (idx + 1) % colors.length;
+        applyColor();
+      });
+
+      btnRotate.addEventListener("click", rotateBox);
+      btnReset.addEventListener("click", resetBox);
+
+      resetBox();
+    </script>
+  </a-scene>
+</body>
+</html>
