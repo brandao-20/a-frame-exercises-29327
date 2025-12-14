@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 1 — A-Frame basics</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+</head>
+<body style="margin:0">
+
+  <!-- Cursor para desktop (cliques) -->
+  <a-scene>
+    <a-entity camera position="0 1.6 0" look-controls>
+      <a-cursor></a-cursor>
+    </a-entity>
+
+    <!-- Primitivas (base) -->
+    <a-box id="box" position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
+    <a-sphere id="sphere" position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
+    <a-cylinder id="cyl" position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+
+    <a-plane position="0 0 -4" rotation="-90 0 0" width="8" height="8" color="#7BC8A4"></a-plane>
+    <a-sky color="#ECECEC"></a-sky>
+
+    <!-- Texto/label simples -->
+    <a-text value="Exercise 1: A-Frame basics (click nos objetos)"
+            position="-2 2.6 -3"
+            width="6"
+            color="#111"></a-text>
+  </a-scene>
+
+  <script>
+    // Interação simples: ao clicar, alterna cor e anima rotação.
+    function toggle(el, a, b) {
+      const cur = el.getAttribute("color");
+      el.setAttribute("color", cur === a ? b : a);
+    }
+
+    const box = document.querySelector("#box");
+    const sphere = document.querySelector("#sphere");
+    const cyl = document.querySelector("#cyl");
+
+    box.addEventListener("click", () => {
+      toggle(box, "#4CC3D9", "#2D9CDB");
+      box.setAttribute("animation", "property: rotation; to: 0 405 0; dur: 900; easing: easeInOutQuad");
+    });
+
+    sphere.addEventListener("click", () => {
+      toggle(sphere, "#EF2D5E", "#9B51E0");
+      sphere.setAttribute("animation", "property: scale; to: 1.3 1.3 1.3; dur: 300; dir: alternate; loop: 2");
+    });
+
+    cyl.addEventListener("click", () => {
+      toggle(cyl, "#FFC65D", "#27AE60");
+      cyl.setAttribute("animation", "property: position; to: 1 1.2 -3; dur: 350; dir: alternate; loop: 2");
+    });
+  </script>
+
+</body>
+</html>
