@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 9 — MindAR events</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body{margin:0;font-family:system-ui;background:#000}
+    .hud{
+      position:fixed;z-index:9999;left:12px;top:12px;right:12px;
+      background:rgba(10,10,10,.65);color:#fff;padding:12px 14px;border-radius:14px;backdrop-filter:blur(8px)
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    button,a{
+      border:0;border-radius:12px;padding:10px 12px;font-weight:800;cursor:pointer;
+      background:rgba(255,255,255,.12);color:#fff;text-decoration:none
+    }
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .log{
+      margin-top:10px;font-size:14px;opacity:.95;line-height:1.35;
+      max-height: 180px; overflow:auto; padding-right:6px;
+    }
+    code{opacity:.95}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.12);font-size:12px;margin-left:8px}
+  </style>
+
+  <script>
+    function hasWebGL() {
+      try {
+        const c = document.createElement("canvas");
+        return !!(c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl"));
+      } catch { return false; }
+    }
+    window.__HAS_WEBGL__ = hasWebGL();
+  </script>
+</head>
+
+<body>
+  <div class="hud">
+    <div>
+      <b>Exercise 9 — MindAR (events)</b>
+      <span id="wg" class="pill">WebGL: …</span>
+    </div>
+
+    <div class="row">
+      <button id="btnStart">Start</button>
+      <button id="btnPause" disabled>Pause</button>
+      <button id="btnUnpause" disabled>Unpause</button>
+      <button id="btnStop" disabled>Stop</button>
+      <button id="btnClear">Clear log</button>
+      <a href="./target.html" target="_blank" rel="noopener">Target</a>
+    </div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: ./targets/mindar_target1.mind; autoStart: false; uiScanning: no; uiLoading: no; uiError: no;"
+    color-space="sRGB"
+    renderer="colorManagement: true; physicallyCorrectLights: true;"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+
+    <a-camera
+      position="0 0 0"
+      look-controls="enabled:false"
+      cursor="fuse:false; rayOrigin: mouse;"
+      raycaster="near:0.01; far:10000; objects: .clickable">
+    </a-camera>
+
+    <a-entity id="t0" mindar-image-target="targetIndex: 0">
+      <a-plane id="plane" class="clickable" color="#4CC3D9" opacity="0.6" height="0.55" width="1"></a-plane>
+
+      <a-entity id="badge" visible="false"
+        text="value: targetFound ✅; color:#111; align:center; width:2.4;"
+        position="0 0.45 0"></a-entity>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const sceneEl  = document.querySelector("a-scene");
+      const logEl    = document.querySelector("#log");
+      const targetEl = document.querySelector("#t0");
+      const badge    = document.querySelector("#badge");
+      const plane    = document.querySelector("#plane");
+
+      const btnStart   = document.querySelector("#btnStart");
+      const btnPause   = document.querySelector("#btnPause");
+      const btnUnpause = document.querySelector("#btnUnpause");
+      const btnStop    = document.querySelector("#btnStop");
+      const btnClear   = document.querySelector("#btnClear");
+      const wg         = document.querySelector("#wg");
+
+      wg.textContent = "WebGL: " + (window.__HAS_WEBGL__ ? "OK" : "NÃO SUPORTADO");
+
+      let arSystem = null;
+      let started = false;
+
+      const now = () => new Date().toLocaleTimeString();
+      const addLog = (msg) => {
+        const line = `<div>[${now()}] <code>${msg}</code></div>`;
+        logEl.insertAdjacentHTML("beforeend", line);
+        logEl.scrollTop = logEl.scrollHeight;
+      };
+
+      const setButtons = () => {
+        btnStart.disabled   = !arSystem || started;
+        btnPause.disabled   = !arSystem || !started;
+        btnUnpause.disabled = !arSystem || !started;
+        btnStop.disabled    = !arSystem || !started;
+      };
+
+      btnClear.addEventListener("click", () => { logEl.innerHTML = ""; addLog("log limpo"); });
+
+      sceneEl.addEventListener("loaded", () => {
+        arSystem = sceneEl.systems["mindar-image-system"] || null;
+        addLog(arSystem ? "scene loaded (mindar system OK)" : "scene loaded (mindar system NÃO encontrado)");
+        if (!window.__HAS_WEBGL__) addLog("⚠️ WebGL não suportado → MindAR não vai arrancar neste dispositivo");
+        setButtons();
+      });
+
+      btnStart.addEventListener("click", async () => {
+        if (!arSystem) return addLog("start(): sem mindar system");
+        try {
+          addLog("start() → a iniciar…");
+          await arSystem.start();
+          started = true;
+          addLog("start() ✅");
+        } catch (e) {
+          addLog("start() ❌ " + (e?.message || e));
+        }
+        setButtons();
+      });
+
+      btnPause.addEventListener("click", () => {
+        if (!arSystem) return;
+        arSystem.pause();
+        addLog("pause()");
+      });
+
+      btnUnpause.addEventListener("click", () => {
+        if (!arSystem) return;
+        arSystem.unpause();
+        addLog("unpause()");
+      });
+
+      btnStop.addEventListener("click", () => {
+        if (!arSystem) return;
+        arSystem.stop();
+        started = false;
+        addLog("stop()");
+        setButtons();
+      });
+
+      // Eventos globais MindAR
+      sceneEl.addEventListener("arReady", () => addLog("arReady ✅ (a procurar target)"));
+      sceneEl.addEventListener("arError", () => addLog("arError ❌ (câmara/HTTPS/permissões/WebGL)"));
+
+      // Eventos do target
+      targetEl.addEventListener("targetFound", () => {
+        badge.setAttribute("visible", true);
+        addLog("targetFound ✅");
+      });
+      targetEl.addEventListener("targetLost", () => {
+        badge.setAttribute("visible", false);
+        addLog("targetLost …");
+      });
+
+      // Click A-Frame
+      plane.addEventListener("click", () => addLog("click no plano (A-Frame) ✅"));
+
+      // Mensagem inicial
+      addLog("pronto → clica Start (no iPhone tem de ser HTTPS)");
+      setButtons();
+    });
+  </script>
+</body>
+</html>
