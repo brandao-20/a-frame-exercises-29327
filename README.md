@@ -2,24 +2,26 @@
 
 Repositório com a resolução completa dos exercícios “A-Frame Exercises” (1 a 9), incluindo demonstrações com **A-Frame**, **aframe-gui**, **AR.js** (marker-based, image tracking/NFT e location-based) e **MindAR** (image tracking, multi-targets, multi-tracks, custom UI e events).
 
+Este repositório é baseado no material fornecido pelo professor no PDF `IEU_2526_05.pdf` (disponível na pasta `docs/`), que descreve os exercícios de A-Frame para a unidade curricular Interação e Experiência de Utilizador. O PDF inclui introduções a A-Frame, exemplos, guias de início, exercícios específicos (como Exercise 1: base A-Frame, Exercise 2: GUI, Exercise 3: AR.js, Exercises 4-9: MindAR) e discussões sobre usabilidade em VR e AR.
+
 > **Nota importante (iPhone)**: A funcionalidade AR (câmara) requer **HTTPS**. Para testar no iPhone, utilizei **GitHub Pages**.
 
 ---
 
 ## Conteúdo do projeto
 
-- `exercise1/` - Cena A-Frame base (introdução / primeiros objetos).
-- `exercise2-gui/` - GUI com **aframe-gui** (botões funcionais) + **patch de compatibilidade** com versões recentes de A-Frame/Three.js.
+- `exercise1/` — Cena A-Frame base (introdução / primeiros objetos).
+- `exercise2-gui/` — GUI com **aframe-gui** (botões funcionais) + **patch de compatibilidade** com versões recentes de A-Frame/Three.js.
 - `exercise3-arjs/`
-  - `marker-based/` - AR.js marker-based com **Hiro marker** + botão para abrir o `marker.html`.
-  - `image-tracking/` - AR.js **NFT (image tracking)** com imagem alvo e descritores (`.fset/.fset3/.iset`) e correção de paths.
-  - `location-based/` - AR.js location-based com UI e **bússola/agulha** para orientar a direção.
-- `exercise4-mindar-minimal/` - MindAR minimal (primeiro target `.mind`).
-- `exercise5-mindar-basic/` - MindAR basic com modelo GLB e interação (toggle/anim).
-- `exercise6-mindar-multi-targets/` - MindAR com **2 targets** e conteúdos diferentes.
-- `exercise7-mindar-multi-tracks/` - MindAR com **maxTrack: 2** (2 targets visíveis ao mesmo tempo).
-- `exercise8-mindar-custom-ui/` - MindAR com **UI personalizada** (loading/scanning/error overlays).
-- `exercise9-mindar-events/` - MindAR com **eventos + controlos** (start/pause/unpause/stop) e log de estado.
+  - `marker-based/` — AR.js marker-based com **Hiro marker** + botão para abrir o `marker.html`.
+  - `image-tracking/` — AR.js **NFT (image tracking)** com imagem alvo e descritores (`.fset/.fset3/.iset`) e correção de paths.
+  - `location-based/` — AR.js location-based com UI e **bússola/agulha** para orientar a direção.
+- `exercise4-mindar-minimal/` — MindAR minimal (primeiro target `.mind`).
+- `exercise5-mindar-basic/` — MindAR basic com modelo GLB e interação (toggle/anim).
+- `exercise6-mindar-multi-targets/` — MindAR com **2 targets** e conteúdos diferentes.
+- `exercise7-mindar-multi-tracks/` — MindAR com **maxTrack: 2** (2 targets visíveis ao mesmo tempo).
+- `exercise8-mindar-custom-ui/` — MindAR com **UI personalizada** (loading/scanning/error overlays).
+- `exercise9-mindar-events/` — MindAR com **eventos + controlos** (start/pause/unpause/stop) e log de estado.
 
 ---
 
@@ -28,7 +30,7 @@ Repositório com a resolução completa dos exercícios “A-Frame Exercises” 
 - Browser moderno (Chrome recomendado).
 - Python 3 (para servidor local simples).
 - Câmara (webcam no PC ou câmara do telemóvel).
-- Para iPhone: servir via **HTTPS** (exemplo: GitHub Pages).
+- Para iPhone: servir via **HTTPS** (ex.: GitHub Pages).
 
 ---
 
@@ -166,6 +168,12 @@ Cena inicial com geometrias simples e estrutura base para os exercícios seguint
   - `arReady`, `arError`
   - `targetFound`, `targetLost`
   - Clique no plano (A-Frame)
+
+---
+
+## Demonstração em Vídeo
+
+Ficheiro no repositório: `video/Exercises_Full_Demo.mp4`
 
 ---
 
