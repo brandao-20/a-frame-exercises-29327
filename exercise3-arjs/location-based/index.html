@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 3C — AR.js (location-based)</title>
+
+  <!-- A-Frame + AR.js -->
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    body { margin:0; overflow:hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .hud {
+      position: fixed; top: 12px; left: 12px; z-index: 9999;
+      background: rgba(17,24,39,.72); color:#fff;
+      padding: 12px; border-radius: 12px; min-width: 340px;
+      backdrop-filter: blur(6px);
+    }
+    .hud h1 { margin:0 0 6px; font-size:16px; font-weight: 800; }
+    .hud p { margin:0; font-size: 13px; opacity:.92; }
+    .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    button, a.btn {
+      appearance:none; border:0; cursor:pointer;
+      padding: 8px 10px; border-radius: 10px;
+      font-size: 13px; font-weight: 700;
+      background:#fff; color:#111827; text-decoration:none;
+    }
+    button.secondary, a.btn.secondary { background: rgba(255,255,255,.18); color:#fff; }
+    .status { margin-top: 10px; font-size: 13px; }
+    .status b { color: #A7F3D0; }
+    .warn { color: #FDE68A; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  </style>
+</head>
+
+<body>
+  <div class="hud">
+    <h1>Exercise 3C — AR.js (Location-based)</h1>
+    <p>
+      iPhone: abre em HTTPS (GitHub Pages) + permite <b>câmara</b> e <b>localização</b>.
+      <br/>Portátil: usa simulação com <code>?sim=1</code>.
+    </p>
+
+    <div class="row">
+      <button id="btnStart">Start (pedir permissões)</button>
+      <button id="btnNear" class="secondary">Colocar alvo a ~3 m</button>
+      <button id="btnFar" class="secondary">Colocar alvo a ~10 m</button>
+    </div>
+
+    <div class="status" id="status">
+      Estado: <span class="warn">à espera…</span>
+    </div>
+
+    <div class="status" id="coords" style="opacity:.9"></div>
+    <div class="status" id="debug" style="opacity:.8"></div>
+  </div>
+
+  <a-scene
+    vr-mode-ui="enabled:false"
+    embedded
+    renderer="logarithmicDepthBuffer: true;"
+    arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
+  >
+    <!-- Câmara GPS -->
+    <a-entity id="cam" gps-camera rotation-reader></a-entity>
+
+    <!-- Objeto geolocalizado (as coords são definidas em JS) -->
+    <a-entity id="poi" visible="false">
+      <a-box color="#4CC3D9" depth="2" height="2" width="2"></a-box>
+      <a-entity
+        position="0 2.6 0"
+        text="value: POI; align: center; width: 12; color: #111827;"
+      ></a-entity>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    // --- Helpers ---
+    function haversineMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const toRad = (d) => d * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2)**2 +
+                Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    // Aproximação simples: mover para norte "meters" (bom o suficiente para demo)
+    function offsetNorth(lat, meters) {
+      return lat + (meters / 111320); // ~ metros por grau de latitude
+    }
+
+    const statusEl = document.getElementById("status");
+    const coordsEl = document.getElementById("coords");
+    const debugEl  = document.getElementById("debug");
+
+    const cam = document.getElementById("cam");
+    const poi = document.getElementById("poi");
+
+    const url = new URL(window.location.href);
+    const sim = url.searchParams.get("sim") === "1";
+
+    let last = { lat: null, lon: null, acc: null };
+    let target = { lat: null, lon: null };
+
+    function setStatus(html) { statusEl.innerHTML = "Estado: " + html; }
+
+    function setTargetAtDistance(meters) {
+      if (last.lat == null || last.lon == null) {
+        setStatus('<span class="warn">sem localização ainda… clica Start e aceita permissões</span>');
+        return;
+      }
+      target.lat = offsetNorth(last.lat, meters);
+      target.lon = last.lon;
+
+      // IMPORTANT: o gps-entity-place tem de estar no elemento que queremos posicionar
+      poi.setAttribute("gps-entity-place", `latitude: ${target.lat}; longitude: ${target.lon};`);
+      poi.setAttribute("visible", "true");
+
+      setStatus(`<b>alvo colocado</b> a ~${meters} m a norte (aprox.)`);
+    }
+
+    function refreshOverlay() {
+      if (last.lat == null) {
+        coordsEl.innerHTML = "";
+        return;
+      }
+      let html = `GPS: <code>${last.lat.toFixed(6)}, ${last.lon.toFixed(6)}</code>`;
+      if (last.acc != null) html += ` • accuracy: <code>${Math.round(last.acc)} m</code>`;
+      coordsEl.innerHTML = html;
+
+      if (target.lat != null) {
+        const d = haversineMeters(last.lat, last.lon, target.lat, target.lon);
+        debugEl.innerHTML = `Target: <code>${target.lat.toFixed(6)}, ${target.lon.toFixed(6)}</code> • dist: <code>${Math.round(d)} m</code>`;
+      } else {
+        debugEl.innerHTML = sim
+          ? `Modo simulação ativo: <code>?sim=1</code>`
+          : `Sugestão: usa iPhone e testa ao ar livre (GPS/compasso mais estável).`;
+      }
+    }
+
+    // --- Permissões (iOS precisa de gesto do utilizador) ---
+    async function requestOrientationIfNeeded() {
+      try {
+        if (typeof DeviceOrientationEvent !== "undefined" &&
+            typeof DeviceOrientationEvent.requestPermission === "function") {
+          await DeviceOrientationEvent.requestPermission();
+        }
+      } catch (e) { /* ok */ }
+    }
+
+    async function start() {
+      await requestOrientationIfNeeded();
+
+      if (sim) {
+        // Simulação para PC: escolhe uma coordenada qualquer (ex.: Lisboa)
+        const simLat = 38.736946;
+        const simLon = -9.142685;
+        cam.setAttribute("gps-camera", `simulateLatitude: ${simLat}; simulateLongitude: ${simLon};`);
+        last.lat = simLat; last.lon = simLon; last.acc = 5;
+        setStatus("<b>simulação ativa</b> (Lisboa)");
+        refreshOverlay();
+        setTargetAtDistance(10);
+        return;
+      }
+
+      // Forçar prompt de localização + guardar valores para overlay/target
+      if (!navigator.geolocation) {
+        setStatus('<span class="warn">geolocation não suportada neste browser</span>');
+        return;
+      }
+
+      setStatus('<span class="warn">a pedir permissões de localização…</span>');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          last.lat = pos.coords.latitude;
+          last.lon = pos.coords.longitude;
+          last.acc = pos.coords.accuracy;
+          setStatus("<b>permissões OK</b> — agora aponta e roda o telemóvel");
+          refreshOverlay();
+          setTargetAtDistance(10);
+        },
+        (err) => {
+          setStatus(`<span class="warn">erro de localização: ${err.message}</span>`);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    }
+
+    // Atualizações do gps-camera (quando o AR.js vai recebendo posição)
+    cam.addEventListener("gps-camera-update-position", (e) => {
+      last.lat = e.detail.position.latitude;
+      last.lon = e.detail.position.longitude;
+      refreshOverlay();
+    });
+
+    // UI
+    document.getElementById("btnStart").addEventListener("click", start);
+    document.getElementById("btnNear").addEventListener("click", () => setTargetAtDistance(3));
+    document.getElementById("btnFar").addEventListener("click", () => setTargetAtDistance(10));
+
+    // Estado inicial
+    setStatus(sim ? '<span class="warn">modo simulação — clica Start</span>'
+                  : '<span class="warn">clica Start e aceita permissões</span>');
+  </script>
+</body>
+</html>
