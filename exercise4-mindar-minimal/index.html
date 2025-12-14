@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 4 — MindAR minimal</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#000; }
+    .hud {
+      position: fixed; z-index: 9999; left: 12px; top: 12px; right: 12px;
+      background: rgba(10,10,10,.65); color: #fff; padding: 12px 14px;
+      border-radius: 14px; backdrop-filter: blur(8px);
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; align-items:center; }
+    .btn, .hud a {
+      appearance: none; border: 0; cursor: pointer;
+      background: rgba(255,255,255,.12); color: #fff;
+      padding: 10px 12px; border-radius: 12px; text-decoration: none;
+      font-weight: 700;
+    }
+    .btn.primary { background: #22c55e; color:#08130b; }
+    .btn.danger { background: #ef4444; color:#fff; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .small { opacity:.9; font-size: 14px; line-height: 1.35; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New"; }
+    .status { margin-top:10px; font-weight:700; }
+  </style>
+</head>
+
+<body>
+  <div class="hud">
+    <div><b>Exercise 4 — MindAR (minimal)</b></div>
+    <div class="small">
+      Dica: abre a imagem alvo em <span class="mono">target.html</span> noutro ecrã e aponta a câmara.
+      <br>
+      Se ficar preso no loading, abre a consola: normalmente é WebGL desativado.
+    </div>
+
+    <div class="row">
+      <button id="btnStart" class="btn primary">Start AR</button>
+      <button id="btnStop" class="btn danger" disabled>Stop</button>
+      <a href="./target.html" target="_blank" rel="noopener">Abrir target.html</a>
+    </div>
+
+    <div id="status" class="status">Estado: pronto (clica Start AR)</div>
+  </div>
+
+  <a-scene
+    id="scene"
+    mindar-image="imageTargetSrc: ./targets/mindar_target1.mind; autoStart: false;"
+    renderer="antialias: true; colorManagement: true"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity id="t0" mindar-image-target="targetIndex: 0">
+      <a-plane color="#4CC3D9" opacity="0.55" height="0.55" width="1"></a-plane>
+      <a-entity
+        text="value: Target detetado!; color: #111; align: center; width: 2.2;"
+        position="0 0.45 0">
+      </a-entity>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    const sceneEl = document.querySelector("#scene");
+    const statusEl = document.querySelector("#status");
+    const btnStart = document.querySelector("#btnStart");
+    const btnStop = document.querySelector("#btnStop");
+    const targetEl = document.querySelector("#t0");
+
+    function setStatus(txt) { statusEl.textContent = "Estado: " + txt; }
+
+    // Eventos de tracking
+    targetEl.addEventListener("targetFound", () => setStatus("TARGET DETETADO ✅"));
+    targetEl.addEventListener("targetLost",  () => setStatus("à procura do target…"));
+
+    sceneEl.addEventListener("loaded", () => {
+      setStatus("pronto (clica Start AR)");
+    });
+
+    btnStart.addEventListener("click", async () => {
+      try {
+        btnStart.disabled = true;
+        setStatus("a iniciar câmara / MindAR…");
+
+        const sys = sceneEl.systems["mindar-image-system"];
+        await sys.start();
+
+        btnStop.disabled = false;
+        setStatus("à procura do target…");
+      } catch (e) {
+        console.error(e);
+        btnStart.disabled = false;
+        setStatus("ERRO a iniciar (vê Console). Provável: WebGL desativado.");
+      }
+    });
+
+    btnStop.addEventListener("click", async () => {
+      try {
+        btnStop.disabled = true;
+        setStatus("a parar…");
+
+        const sys = sceneEl.systems["mindar-image-system"];
+        await sys.stop();
+
+        btnStart.disabled = false;
+        setStatus("parado (clica Start AR)");
+      } catch (e) {
+        console.error(e);
+        btnStart.disabled = false;
+        setStatus("ERRO a parar (vê Console).");
+      }
+    });
+  </script>
+</body>
+</html>
