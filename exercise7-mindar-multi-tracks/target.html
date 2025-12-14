@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 7 — Targets</title>
+  <style>
+    body{margin:0;background:#f4f4f4;font-family:system-ui}
+    .wrap{
+      display:grid; gap:16px; padding:18px;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      align-items:start;
+    }
+    .card{
+      background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.12);
+      padding:16px;text-align:center;
+    }
+    img{max-width:100%;height:auto;border-radius:12px}
+    h3{margin:0 0 12px}
+    p{margin:10px 0 0; opacity:.75}
+    @media print {
+      body{background:#fff}
+      .wrap{grid-template-columns:1fr 1fr; gap:10mm; padding:0}
+      .card{box-shadow:none; border:1px solid #ddd; border-radius:8px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h3>Target 1</h3>
+      <img src="mindar_target1.png" alt="MindAR Target 1">
+      <p>Mostra este target à câmara.</p>
+    </div>
+
+    <div class="card">
+      <h3>Target 2</h3>
+      <img src="mindar_target2.png" alt="MindAR Target 2">
+      <p>Mostra este target à câmara.</p>
+    </div>
+  </div>
+</body>
+</html>

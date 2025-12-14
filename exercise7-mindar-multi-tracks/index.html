@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 7 — MindAR multi-tracks</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body { margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    .hud{
+      position:fixed; z-index:9999; left:12px; top:12px; right:12px;
+      background:rgba(10,10,10,.65); color:#fff; padding:12px 14px;
+      border-radius:14px; backdrop-filter:blur(8px);
+    }
+    .hud .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; align-items:center;}
+    .hud a{
+      display:inline-block; background:rgba(255,255,255,.12); color:#fff;
+      padding:10px 12px; border-radius:12px; text-decoration:none; font-weight:700;
+    }
+    .badge{
+      padding:6px 10px; border-radius:999px; font-weight:700; font-size:13px;
+      background:rgba(255,255,255,.12);
+    }
+    .ok{background:rgba(34,197,94,.22)}
+    .no{background:rgba(239,68,68,.22)}
+    code{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  </style>
+</head>
+
+<body>
+  <div class="hud">
+    <div><b>Exercise 7 — MindAR (multi-tracks)</b></div>
+    <div style="opacity:.9">
+      Objetivo: mostrar <b>2 targets ao mesmo tempo</b> para ver <b>2 objetos visíveis</b> (tracking simultâneo).
+    </div>
+
+    <div class="row">
+      <a href="./target.html" target="_blank" rel="noopener">Abrir targets</a>
+      <span class="badge" id="t0">Target 1: a procurar…</span>
+      <span class="badge" id="t1">Target 2: a procurar…</span>
+    </div>
+
+    <div style="opacity:.85; margin-top:6px">
+      Dica: abre <code>target.html</code> num ecrã grande (ou imprime) e tenta enquadrar as <b>duas imagens</b> na câmara.
+    </div>
+  </div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: ./targets/targets.mind; maxTrack: 2;"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+
+    <!-- TARGET 0 -->
+    <a-entity id="anchor0" mindar-image-target="targetIndex: 0">
+      <a-torus-knot
+        position="0 0 0"
+        radius="0.12"
+        radius-tubular="0.03"
+        material="color: #4CC3D9; metalness: 0.2; roughness: 0.6"
+        animation="property: rotation; to: 360 360 0; loop: true; dur: 4000">
+      </a-torus-knot>
+
+      <a-entity
+        text="value: Track 1; color:#111; align:center; width:2;"
+        position="0 0.42 0">
+      </a-entity>
+    </a-entity>
+
+    <!-- TARGET 1 -->
+    <a-entity id="anchor1" mindar-image-target="targetIndex: 1">
+      <a-cone
+        position="0 0 0"
+        height="0.35"
+        radius-bottom="0.16"
+        material="color: #EF2D5E; metalness: 0.1; roughness: 0.7"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 2800">
+      </a-cone>
+
+      <a-entity
+        text="value: Track 2; color:#111; align:center; width:2;"
+        position="0 0.42 0">
+      </a-entity>
+    </a-entity>
+
+    <script>
+      function setBadge(el, ok, label) {
+        el.textContent = label;
+        el.classList.remove("ok", "no");
+        el.classList.add(ok ? "ok" : "no");
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const b0 = document.getElementById("t0");
+        const b1 = document.getElementById("t1");
+
+        const a0 = document.getElementById("anchor0");
+        const a1 = document.getElementById("anchor1");
+
+        setBadge(b0, false, "Target 1: a procurar…");
+        setBadge(b1, false, "Target 2: a procurar…");
+
+        a0.addEventListener("targetFound", () => setBadge(b0, true,  "Target 1: detetado ✅"));
+        a0.addEventListener("targetLost",  () => setBadge(b0, false, "Target 1: perdido ❌"));
+
+        a1.addEventListener("targetFound", () => setBadge(b1, true,  "Target 2: detetado ✅"));
+        a1.addEventListener("targetLost",  () => setBadge(b1, false, "Target 2: perdido ❌"));
+      });
+    </script>
+  </a-scene>
+</body>
+</html>
