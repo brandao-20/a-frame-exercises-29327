@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 6 — MindAR multi-targets</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    .hud{
+      position: fixed; z-index: 9999; left: 12px; top: 12px; right: 12px;
+      background: rgba(10,10,10,.65); color:#fff; padding: 12px 14px;
+      border-radius: 14px; backdrop-filter: blur(8px);
+    }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; align-items:center; }
+    .btn{
+      appearance:none; border:0; cursor:pointer;
+      background: rgba(255,255,255,.12); color:#fff;
+      padding: 10px 12px; border-radius: 12px;
+      text-decoration:none; font-weight: 700;
+    }
+    .pill{
+      display:inline-block; padding: 6px 10px; border-radius: 999px;
+      background: rgba(255,255,255,.12); font-weight: 700;
+    }
+    code{ background: rgba(255,255,255,.12); padding: 2px 6px; border-radius: 8px; }
+    .ok{ color:#86efac; font-weight:800; }
+    .warn{ color:#fbbf24; font-weight:800; }
+  </style>
+</head>
+
+<body>
+  <div class="hud">
+    <div><b>Exercise 6 — MindAR (multi-targets)</b></div>
+    <div style="opacity:.9">
+      Mostra o <b>Target 1</b> ou o <b>Target 2</b> para veres conteúdos diferentes.
+      (<span class="warn">Nota</span>: o ficheiro <code>targets/targets.mind</code> tem de conter os 2 targets.)
+    </div>
+
+    <div class="row">
+      <a class="btn" href="./target.html" target="_blank" rel="noopener">Abrir target.html</a>
+      <span class="pill" id="status">Estado: à procura de targets…</span>
+    </div>
+  </div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: ./targets/targets.mind;"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+
+    <a-entity light="type: ambient; intensity: 1.0"></a-entity>
+    <a-entity light="type: directional; intensity: 0.8" position="0 2 1"></a-entity>
+
+    <!-- TARGET 1 (index 0) -->
+    <a-entity id="t0" mindar-image-target="targetIndex: 0">
+      <a-box color="#4CC3D9" depth="0.25" height="0.25" width="0.25"
+             position="0 0 0"
+             animation="property: rotation; to: 0 360 0; loop: true; dur: 3500"></a-box>
+
+      <a-entity
+        text="value: Target 1; color:#111; align:center; width:2.2;"
+        position="0 0.4 0"></a-entity>
+    </a-entity>
+
+    <!-- TARGET 2 (index 1) -->
+    <a-entity id="t1" mindar-image-target="targetIndex: 1">
+      <a-sphere color="#EF2D5E" radius="0.18" position="0 0 0"
+                animation="property: scale; dir: alternate; dur: 800; loop: true; to: 1.25 1.25 1.25"></a-sphere>
+
+      <a-entity
+        text="value: Target 2; color:#111; align:center; width:2.2;"
+        position="0 0.4 0"></a-entity>
+    </a-entity>
+
+    <script>
+      const statusEl = document.getElementById("status");
+      const t0 = document.getElementById("t0");
+      const t1 = document.getElementById("t1");
+
+      function setStatus(msg, ok=false) {
+        statusEl.innerHTML = ok ? `Estado: <span class="ok">${msg}</span>` : `Estado: ${msg}`;
+      }
+
+      setStatus("à procura de targets…");
+
+      t0.addEventListener("targetFound", () => setStatus("Target 1 detetado ✅", true));
+      t0.addEventListener("targetLost",  () => setStatus("Target 1 perdido… (procura outro target)", false));
+
+      t1.addEventListener("targetFound", () => setStatus("Target 2 detetado ✅", true));
+      t1.addEventListener("targetLost",  () => setStatus("Target 2 perdido… (procura outro target)", false));
+    </script>
+  </a-scene>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exercise 6 — Targets</title>
+  <style>
+    body{margin:0;background:#f4f4f4;font-family:system-ui}
+    .wrap{display:grid;gap:16px;padding:18px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .card{background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.12);padding:16px;text-align:center}
+    img{max-width:100%;border-radius:12px}
+    h3{margin:0 0 12px}
+    .hint{opacity:.75;margin:10px 0 0}
+    .btnrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+    a{
+      display:inline-block;text-decoration:none;font-weight:800;
+      background:#111827;color:#fff;padding:10px 12px;border-radius:12px
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h3>Target 1</h3>
+      <img src="mindar_target1.png" alt="Target 1">
+      <div class="btnrow">
+        <a href="mindar_target1.png" target="_blank" rel="noopener">Abrir imagem</a>
+      </div>
+      <p class="hint">Mostra/imprime esta imagem e aponta a câmara na página AR.</p>
+    </div>
+
+    <div class="card">
+      <h3>Target 2</h3>
+      <img src="mindar_target2.png" alt="Target 2">
+      <div class="btnrow">
+        <a href="mindar_target2.png" target="_blank" rel="noopener">Abrir imagem</a>
+      </div>
+      <p class="hint">Mostra/imprime esta imagem e aponta a câmara na página AR.</p>
+    </div>
+  </div>
+</body>
+</html>
